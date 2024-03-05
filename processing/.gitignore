@@ -1,0 +1,3 @@
+# Ignore run files and output logs
+s3_wrappers/*/*/run_files.abcd-hcp-pipeline_infant/
+s3_wrappers/*/*/output_logs/
