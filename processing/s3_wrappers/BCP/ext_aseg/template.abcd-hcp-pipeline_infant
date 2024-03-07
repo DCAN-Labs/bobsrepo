@@ -31,14 +31,14 @@ fi
 # BIDS 
 s3cmd get ${data_bucket}/sub-${subj_id}/ses-${ses_id} ${SUB_BIDS_DIR}/ --recursive -v
 
-# External segmentation and brainmask (brainmask pulled from original processed outputs)
+# External segmentation and brainmask (brainmask pulled from original processed outputs) and acpc.mat file
 s3_aseg=${data_bucket}/derivatives/manual_segmentations/sub-${subj_id}/ses-${ses_id}/aseg_acpc.nii.gz
 aseg_filename=sub-${subj_id}_ses-${ses_id}_aseg_acpc.nii.gz
 s3cmd get ${s3_aseg} ${EXT_ASEG_DIR}/${aseg_filename} --recursive -v
 
-s3_brainmask=s3://BCP_renamed_processed/BCP_renamed/sub-${subj_id}/ses-${ses_id}/files/T1w/brainmask_fs.nii.gz
-brainmask_filename=sub-${subj_id}_ses-${ses_id}_brainmask.nii.gz
-s3cmd get ${s3_brainmask} ${EXT_ASEG_DIR}/${brainmask_filename} --recursive -v
+# s3_brainmask=s3://BCP_renamed_processed/BCP_renamed/sub-${subj_id}/ses-${ses_id}/files/T1w/brainmask_fs.nii.gz
+# brainmask_filename=sub-${subj_id}_ses-${ses_id}_brainmask.nii.gz
+# s3cmd get ${s3_brainmask} ${EXT_ASEG_DIR}/${brainmask_filename} --recursive -v
 
 if [ ! -e ${BIDS_DIR}/dataset_description.json ]; then
 	cp ${run_dir}/dataset_description.json ${BIDS_DIR}
@@ -68,8 +68,6 @@ ${infant_abcd_bids_pipeline} \
 --hyper-normalization-method ${HNM} \
 --ncpus ${NCPUS} \
 --aseg /aseg_dir/${aseg_filename} \
---T1-brain-mask /aseg_dir/${brainmask_filename} \
---atropos-mask-method NONE \
 /bids_input /output
 
 # when using global scratch, delete BIDS at end 
@@ -78,7 +76,6 @@ ${infant_abcd_bids_pipeline} \
 #push processed outputs to bucket
 s3cmd sync -F --recursive -v ${OUTPUT_DIR}/sub-${subj_id}/ses-${ses_id}/ ${data_bucket}/processed_w_man_corr_aseg/dcan-infant-pipeline/sub-${subj_id}/ses-${ses_id}/
 
-
+# When feeding in external brainmask:
+# --T1-brain-mask /aseg_dir/${brainmask_filename} \
 # --atropos-mask-method NONE \
-# --no-crop \
-# --dcmethod NONE \
