@@ -1,7 +1,7 @@
 #!/bin/bash -l
 #SBATCH -J BCPXaseg
 #SBATCH --mem=60gb
-#SBATCH --tmp=100gb
+#SBATCH --tmp=150gb
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=fayzu001@umn.edu
 #SBATCH -o output_logs/abcd-hcp-pipeline_infant_%A_%a.out
