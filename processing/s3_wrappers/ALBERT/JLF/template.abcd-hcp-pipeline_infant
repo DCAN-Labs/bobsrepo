@@ -11,12 +11,12 @@ BIDS_DIR=${temp_dir}/BIDS
 SUB_BIDS_DIR=${temp_dir}/BIDS/sub-${subj_id}
 SES_BIDS_DIR=${temp_dir}/BIDS/sub-${subj_id}/ses-${ses_id}
 OUTPUT_DIR=${temp_dir}/processed/dcan-infant-pipeline
-JLF_TEMPLATES_DIR=${temp_dir}/jlf_templates
+#JLF_TEMPLATES_DIR=${temp_dir}/jlf_templates
 
 # create these folders on global scratch if they don't exist 
-if [ ! -d ${JLF_TEMPLATES_DIR} ]; then
-	mkdir -p ${JLF_TEMPLATES_DIR}
-fi
+# if [ ! -d ${JLF_TEMPLATES_DIR} ]; then
+# 	mkdir -p ${JLF_TEMPLATES_DIR}
+# fi
 if [ ! -d ${BIDS_DIR} ]; then
 	mkdir -p ${BIDS_DIR}
 fi
@@ -29,7 +29,7 @@ fi
 
 # pull down needed data and files from BIDS bucket
 s3cmd get ${data_bucket}/sub-${subj_id}/ses-${ses_id} ${SUB_BIDS_DIR}/ --recursive -v
-s3cmd get ${data_bucket}/updated_JLF_templates/${ses_id}/ ${JLF_TEMPLATES_DIR}/  --recursive -v
+#s3cmd get ${data_bucket}/updated_JLF_templates/${ses_id}/ ${JLF_TEMPLATES_DIR}/  --recursive -v
 
 if [ ! -e ${BIDS_DIR}/dataset_description.json ]; then
 	cp ${run_dir}/dataset_description.json ${BIDS_DIR}
@@ -40,6 +40,8 @@ fi
 
 infant_abcd_bids_pipeline=/home/faird/shared/code/internal/pipelines/DCAN-infant-BIDS/infant-abcd-bids-pipeline_latest_02202023a.sif
 echo ${infant_abcd_bids_pipeline}
+
+JLF_TEMPLATES_DIR=/home/feczk001/shared/projects/BOBSRepo/PROC/updated_JLF_templates/0mo
 
 FS_LICENSE=/home/faird/shared/code/external/utilities/freesurfer_license
 HNM=ROI_IPS
