@@ -1,4 +1,4 @@
-## Downloading BOBs Repository Data from Amazon S3 bucket.
+## Downloading BOBs Repository Data from Amazon S3 Bucket
 
 We recommend using [Cyberduck](https://cyberduck.io/) to download the BOBs Repository image files locally. After downloading and opening Cyberduck, do the following to connect to the data repository bucket stored on Amazon Web Services S3 bucket:
 
