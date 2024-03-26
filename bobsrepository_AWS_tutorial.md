@@ -8,7 +8,7 @@ We recommend using [Cyberduck](https://cyberduck.io/) to download the BOBs Repos
 5. Expand the More Options tab and enter for Path: `future/path/to/data`
 6. Click *Connect*
 
-![cyberduck screenshoy](https://github.com/DCAN-Labs/bobsrepo/blob/main/cyberduck_screenshot.png)
+![cyberduck screenshot](https://github.com/DCAN-Labs/bobsrepo/blob/main/cyberduck_screenshot.png)
 
 
 ## Organization of BOBS Repository Data in S3 Bucket
@@ -17,4 +17,6 @@ The top-level directory contains all participants folders named by subject ID, e
 In addition, the top-level directory also contains 2 files: a `dataset_description.json` and `participants.tsv` file that contain a description of the dataset and list of subject IDs and sessions, respectively, following [BIDS specification](https://bids-specification.readthedocs.io/en/stable/modality-agnostic-files.html#modality-agnostic-files). 
 
 Here is an example of the directory structure using fake subject ID numbers:
+
+![tree](https://github.com/DCAN-Labs/bobsrepo/blob/main/s3_tree.png)
 
