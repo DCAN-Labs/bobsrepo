@@ -9,3 +9,12 @@ We recommend using [Cyberduck](https://cyberduck.io/) to download the BOBs Repos
 6. Click *Connect*
 
 ![cyberduck screenshoy](https://github.com/DCAN-Labs/bobsrepo/blob/main/cyberduck_screenshot.png)
+
+
+## Organization of BOBS Repository Data in S3 Bucket
+The top-level directory contains all participants folders named by subject ID, each of which contains session folders that indicate the age at which the MRI images were acquired (eg ses-1mo acquired at 1 month old chronological age). The T1w and T2w image files and accompanying segmentation files are located in the `anat` subdirectory under session following [BIDS Derivatives](https://bids-specification.readthedocs.io/en/stable/derivatives/introduction.html) data structure requirements.
+
+In addition, the top-level directory also contains 2 files: a `dataset_description.json` and `participants.tsv` file that contain a description of the dataset and list of subject IDs and sessions, respectively, following [BIDS specification](https://bids-specification.readthedocs.io/en/stable/modality-agnostic-files.html#modality-agnostic-files). 
+
+Here is an example of the directory structure using fake subject ID numbers:
+
