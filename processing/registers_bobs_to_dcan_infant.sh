@@ -13,4 +13,4 @@ flirt -ref $PREPROC_T2 -in $ORIG_ALBERT_T2 -omat omat.mat -out albert2preprocT2.
 # Step 2: apply .mat file to aseg:
 INPUTASEG=/home/midb-ig/public/hendr522/nnUNet/Realdata_BCP_and_ALBERTs_dataset/segmentations/0mo_sub-01.nii.gz
 
-applywarp --rel --interp=spline -i $INPUTASEG -r $PREPROC_T2 --premat=omat.mat -o albert2preprocT2_aseg.nii.gz
+applywarp --rel --interp=nn -i $INPUTASEG -r $PREPROC_T2 --premat=omat.mat -o albert2preprocT2_aseg.nii.gz
