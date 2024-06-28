@@ -1,0 +1,104 @@
+#!/bin/bash
+
+subj_id=SUBJECTID
+ses_id=SESID
+temp_dir=TEMPDIR
+data_bucket=BUCKET
+run_dir=RUNDIR
+singularity=`which singularity`
+
+BIDS_DIR=${temp_dir}/BIDS
+SUB_BIDS_DIR=${temp_dir}/BIDS/sub-${subj_id}
+SES_BIDS_DIR=${temp_dir}/BIDS/sub-${subj_id}/ses-${ses_id}
+OUTPUT_DIR=${temp_dir}/processed/dcan-infant-pipeline
+JLF_TEMPLATES_DIR=${temp_dir}/JLF_templates
+
+# create these folders on global scratch if they don't exist 
+if [ ! -d ${BIDS_DIR} ]; then
+	mkdir -p ${BIDS_DIR}
+fi
+if [ ! -d ${SES_BIDS_DIR} ]; then
+	mkdir -p ${SES_BIDS_DIR}
+fi
+if [ ! -d ${OUTPUT_DIR} ]; then
+	mkdir -p ${OUTPUT_DIR}
+fi
+if [ ! -d ${JLF_TEMPLATES_DIR} ]; then
+	mkdir -p ${JLF_TEMPLATES_DIR}
+fi
+
+# pull down needed data and files from BIDS bucket and suppress logging
+s3cmd get ${data_bucket}/sub-${subj_id}/ses-${ses_id} ${SUB_BIDS_DIR}/ --recursive > /dev/null 2>&1
+s3cmd get ${data_bucket}/derivatives/JLF_templates/${ses_id}/ ${JLF_TEMPLATES_DIR}/  --recursive > /dev/null 2>&1
+
+# Delete matching subject template from JLF_TEMPLATES_DIR
+rm -r ${JLF_TEMPLATES_DIR}/sub-${subj_id}
+
+if [ ! -e ${BIDS_DIR}/dataset_description.json ]; then
+	cp ${run_dir}/dataset_description.json ${BIDS_DIR}
+fi
+if [ ! -e ${BIDS_DIR}/participants.tsv ]; then
+	s3cmd get ${data_bucket}/participants.tsv ${BIDS_DIR}
+fi
+
+MONTH=`echo ${ses_id} | awk -F"mo" '{print $1}'`
+
+# Get template by checking month against avail templates
+if   [ "${MONTH}" -le 1 ] ; then
+    template=00-02
+elif [ "${MONTH}" -le 4 ] ; then
+    template=02-05
+elif [ "${MONTH}" -le 11 ] ; then
+    template=08-11
+elif [ "${MONTH}" -le 14 ] ; then
+    template=11-14
+elif [ "${MONTH}" -le 17 ] ; then
+    template=14-17
+elif [ "${MONTH}" -le 21 ] ; then
+    template=17-21
+elif [ "${MONTH}" -le 27 ] ; then
+    template=21-27
+elif [ "${MONTH}" -le 33 ] ; then
+    template=27-33
+elif [ "${MONTH}" -le 44 ] ; then
+    template=33-44
+elif [ "${MONTH}" -le 60 ] ; then
+    template=44-60
+else
+    echo "Invalid month: ${MONTH}, exiting."
+    exit 1
+fi
+
+TEMPLATE_BIND=/home/faird/shared/code/internal/pipelines/age_specific_atlases/${template}
+
+infant_abcd_bids_pipeline=/home/faird/shared/code/internal/pipelines/DCAN-infant-BIDS/infant-abcd-bids-pipeline_latest_02202023a.sif
+echo ${infant_abcd_bids_pipeline}
+
+FS_LICENSE=/home/faird/shared/code/external/utilities/freesurfer_license
+HNM=ROI_IPS
+NCPUS=12
+
+lic_loc=/opt/freesurfer/license.txt
+
+singularity run --cleanenv \
+-e \
+-B ${BIDS_DIR}:/bids_input \
+-B ${OUTPUT_DIR}:/output \
+-B ${FS_LICENSE}/license.txt:${lic_loc} \
+-B ${TEMPLATE_BIND}:/opt/pipeline/global/templates \
+-B ${JLF_TEMPLATES_DIR}:/jlf_templates \
+${infant_abcd_bids_pipeline} \
+--freesurfer-license ${lic_loc} \
+--participant-label ${subj_id} \
+--session-id ${ses_id} \
+--hyper-normalization-method ${HNM} \
+--bandstop 16.8896 28.6662 \
+--dcmethod TOPUP \
+--ncpus ${NCPUS} \
+--atropos-mask-method NONE \
+--multi-template-dir /jlf_templates \
+/bids_input /output
+
+#push processed outputs to bucket
+s3cmd sync -F --recursive --delete-removed ${OUTPUT_DIR}/sub-${subj_id}/ses-${ses_id}/ ${data_bucket}/processed/JLF/dcan-infant-pipeline/sub-${subj_id}/ses-${ses_id}/
+

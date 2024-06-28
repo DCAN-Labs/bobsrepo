@@ -1,0 +1,83 @@
+#!/bin/bash
+
+subj_id=SUBJECTID
+ses_id=SESID
+temp_dir=TEMPDIR
+data_bucket=BUCKET
+run_dir=RUNDIR
+singularity=`which singularity`
+
+BIDS_DIR=${temp_dir}/BIDS
+SUB_BIDS_DIR=${BIDS_DIR}/sub-${subj_id}
+EXT_ASEG_DIR=${temp_dir}/ext_aseg
+OUTPUT_DIR=${temp_dir}/processed/dcan-infant-pipeline
+MASK_DIR=${temp_dir}/brainmask
+
+# create these folders on global scratch if they don't exist 
+if [ ! -d ${BIDS_DIR} ]; then
+	mkdir -p ${BIDS_DIR}
+fi
+if [ ! -d ${SUB_BIDS_DIR} ]; then
+	mkdir -p ${SUB_BIDS_DIR}
+fi
+if [ ! -d ${EXT_ASEG_DIR} ]; then
+	mkdir -p ${EXT_ASEG_DIR}
+fi
+if [ ! -d ${OUTPUT_DIR} ]; then
+	mkdir -p ${OUTPUT_DIR}
+fi
+if [ ! -d ${MASK_DIR} ]; then
+	mkdir -p ${MASK_DIR}
+fi
+
+# pull down needed data and files from BIDS bucket
+s3cmd get ${data_bucket}/sub-${subj_id}/ses-${ses_id} ${SUB_BIDS_DIR}/ --recursive > /dev/null 2>&1
+
+ASEG_DIR=/home/feczk001/shared/projects/BOBSRepo/PROC/bobsrepo/processing/general/ALBERTreg2DCANinfant/registered_asegs
+aseg_filename=${ses_id}_sub-${subj_id}_reg2dcaninfant_mc.nii.gz
+cp ${ASEG_DIR}/${aseg_filename} ${EXT_ASEG_DIR}
+
+brainmask_f=sub-${subj_id}_ses-0mo_T2w_maskdil.nii.gz
+s3cmd get ${data_bucket}/derivatives/ALBERT_brainmasks/${brainmask_f} ${MASK_DIR}/ --recursive > /dev/null 2>&1
+
+if [ ! -e ${BIDS_DIR}/dataset_description.json ]; then
+	cp ${run_dir}/dataset_description.json ${BIDS_DIR}
+fi
+if [ ! -e ${BIDS_DIR}/participants.tsv ]; then
+	s3cmd get ${data_bucket}/participants.tsv ${BIDS_DIR} 
+fi
+
+infant_abcd_bids_pipeline=/home/faird/shared/code/internal/pipelines/DCAN-infant-BIDS/infant-abcd-bids-pipeline_latest_02202023a.sif
+echo ${infant_abcd_bids_pipeline}
+FS_LICENSE=/home/faird/shared/code/external/utilities/freesurfer_license
+HNM=ROI_IPS
+NCPUS=12
+
+lic_loc=/opt/freesurfer/license.txt
+
+singularity run --cleanenv \
+-e \
+-B ${BIDS_DIR}:/bids_input \
+-B ${OUTPUT_DIR}:/output \
+-B ${EXT_ASEG_DIR}:/aseg_dir \
+-B ${MASK_DIR}:/mask_dir \
+-B ${FS_LICENSE}/license.txt:${lic_loc} \
+${infant_abcd_bids_pipeline} \
+--freesurfer-license ${lic_loc} \
+--participant-label ${subj_id} \
+--session-id ${ses_id} \
+--hyper-normalization-method ${HNM} \
+--ncpus ${NCPUS} \
+--aseg /aseg_dir/${aseg_filename} \
+--atropos-mask-method NONE \
+--anat-only \
+--dcmethod NONE \
+--T1-brain-mask /mask_dir/${brainmask_f} \
+--no-crop \
+/bids_input /output
+
+# when using global scratch, delete BIDS at end 
+#rm -fr ${SES_BIDS_DIR}
+
+#push processed outputs to bucket
+s3cmd sync -F --recursive --delete-removed ${OUTPUT_DIR}/sub-${subj_id}/ses-${ses_id}/ ${data_bucket}/processed/man_corr_aseg/dcan-infant-pipeline/sub-${subj_id}/ses-${ses_id}/
